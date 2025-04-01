@@ -54,12 +54,17 @@
 </head>
 <body>
   <div id="content">
-    <!-- 동적으로 로또 결과가 표시될 영역 -->
+    <!-- 로또 결과가 여기 표시됩니다 -->
   </div>
   <button onclick="generateLotto()">새로운 번호 받기</button>
-
+  
   <script>
-    // 1. 1~45 사이의 정수를 n개 생성하는 함수
+    // min ~ max 사이의 랜덤 정수 반환
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    // 1부터 45까지의 정수를 n개 생성
     function generateNumbers(n) {
       let nums = [];
       for (let i = 0; i < n; i++) {
@@ -68,39 +73,32 @@
       return nums;
     }
     
-    // 2. min~max 사이의 랜덤 정수 반환
-    function getRandomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-    
-    // 3. 당첨 번호를 생성: 5개 메인번호(오름차순 정렬)와 1개의 보너스 번호
+    // 메인 번호 6개(정렬)와 보너스 번호 1개를 생성하여 총 7개를 반환
     function drawWinningNumbers() {
-      let mainNums = generateNumbers(5).sort((a, b) => a - b);
-      let bonus = generateNumbers(1);
+      let mainNums = generateNumbers(6).sort((a, b) => a - b);
+      let bonus = generateNumbers(1)[0];
       return mainNums.concat(bonus);
     }
     
-    // 4. 두 배열에서 동일한 숫자 개수를 센다
+    // 두 배열에서 동일한 숫자의 개수를 센다
     function countMatchingNumbers(numbers, winningNumbers) {
       let count = 0;
       for (let i = 0; i < numbers.length; i++) {
-        for (let j = 0; j < winningNumbers.length; j++) {
-          if (numbers[i] === winningNumbers[j]) {
-            count++;
-          }
+        if (winningNumbers.includes(numbers[i])) {
+          count++;
         }
       }
       return count;
     }
     
-    // 5. 당첨 결과를 계산 (파이썬 코드의 check 함수와 동일한 로직)
+    // 시도(내 번호)와 당첨 번호를 비교하여 당첨 금액 결정
     function check(numbers, winningNumbers) {
       let prizes = ["5000", "50000", "1000000", "50000000", "1000000000"];
       let n = countMatchingNumbers(numbers, winningNumbers);
       if (n >= 3 && n !== 6) {
         return prizes[n - 3];
       } else if (n === 5 || n === 6) {
-        // 보너스 번호를 제외한 메인 6개 번호의 매칭 개수로 판단
+        // 보너스 번호를 제외한 첫 6개 번호 매칭 여부로 판단
         if (countMatchingNumbers(numbers, winningNumbers.slice(0, 6)) === 5) {
           return prizes[3];
         } else {
@@ -111,7 +109,7 @@
       }
     }
     
-    // 6. 번호에 따른 색상을 반환
+    // 번호에 따른 색상을 결정
     function getColor(number) {
       if (number <= 10) return "yellow";
       else if (number <= 20) return "blue";
@@ -120,7 +118,7 @@
       else return "green";
     }
     
-    // 7. 당첨 번호를 HTML로 생성
+    // 당첨 번호를 HTML로 표시 (메인 6개와 보너스 번호)
     function generateNumbersHTML(numbers) {
       let html = "";
       for (let i = 0; i < 6; i++) {
@@ -131,12 +129,11 @@
       return html;
     }
     
-    // 8. 시도(내 번호) 결과 HTML 생성 (각 시도의 번호와 당첨 금액 표시)
+    // 각 시도의 번호와 당첨 금액을 HTML로 생성
     function generateAttemptHTML(attempt, winningNumbers) {
       let attemptHTML = "";
       for (let i = 0; i < attempt.numbers.length; i++) {
         let num = attempt.numbers[i];
-        // 메인 번호(첫 6개)와 보너스 번호 구분하여 색상 적용
         if (winningNumbers.slice(0, 6).includes(num)) {
           attemptHTML += '<span class="attempt-number red">' + num + '</span>';
         } else if (winningNumbers.slice(6).includes(num)) {
@@ -148,7 +145,7 @@
       return '<div class="attempt"><div>' + attemptHTML + '</div><div>‎₩' + attempt.prize + '</div></div>';
     }
     
-    // 9. 전체 로또 시뮬레이션 실행: 당첨 번호, 여러 시도(예, 100회), 총 당첨 금액 및 사용 금액 계산 후 HTML 업데이트
+    // 전체 로또 시뮬레이션 실행 및 결과 HTML 업데이트
     function generateLotto() {
       let winningNumbers = drawWinningNumbers();
       let NUM_TRIES = 100;
@@ -164,7 +161,6 @@
         totalCost += 1000;
       }
       
-      // 결과 HTML 구성
       let contentHTML = "";
       contentHTML += "<div><h1>당첨 번호</h1>" + generateNumbersHTML(winningNumbers) + "</div>";
       contentHTML += "<div><h2>당첨 금액: ‎₩" + totalPrize + "</h2></div>";
